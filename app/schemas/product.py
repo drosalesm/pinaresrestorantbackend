@@ -11,12 +11,16 @@ class ProductCreate(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
+    category_id: Optional[int] = None  # Allow updating category_id
+
 
 # ✅ Schema for updating a product
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     price: Optional[float] = None
     description: Optional[str] = None
+    category_id: Optional[int] = None  # Include category_id as an optional field
+
 
 # Enables ORM support
 

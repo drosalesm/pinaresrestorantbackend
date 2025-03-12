@@ -18,8 +18,9 @@ if config.config_file_name is not None:
 
 from app.models.product import Product
 from app.models.log import LogEntry
-from app.models.inventory import Inventory
+from app.models.categoryProducts import CategoryProducts
 from app.models.users import User
+from app.models.orders import Order, OrderItem
 
 from app.db.database import Base  # Ensure this is the correct path to your Base model
 target_metadata = Base.metadata

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from sqlalchemy.exc import OperationalError
-from app.routers import product,auth
+from app.routers import product,auth,categories,orders
 from fastapi.responses import JSONResponse
 from app.middleware.logging_middleware import log_request_response
 
@@ -8,6 +8,8 @@ app = FastAPI()
 
 # Include routers
 app.include_router(product.router, prefix="/api", tags=["Products"])
+app.include_router(categories.router, prefix="/api", tags=["Categories"])
+app.include_router(orders.router, prefix="/api", tags=["Orders"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
 app.middleware("http")(log_request_response)
