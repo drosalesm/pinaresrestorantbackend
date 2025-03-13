@@ -1,7 +1,10 @@
 # schemas/order.py
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from pydantic import BaseModel, condecimal
+from typing import Optional, Dict
+
+
 
 class OrderItemResponse(BaseModel):
     id: int
@@ -37,3 +40,52 @@ class OrderResponse(BaseModel):
             updated_at=order.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
             order_items=[OrderItemResponse.from_orm(item) for item in order.order_items]
         )
+
+
+
+        
+
+
+class OrderItemCreateSchema(BaseModel):
+    product_id: int
+    quantity: int  # Simplified to just int
+    total: float  # Simplified to just float
+
+    class Config:
+        orm_mode = True
+
+class OrderCreateSchema(BaseModel):
+    user_id: int
+    customer_name: Optional[str] = None  # Optional field
+    status: str = "pending"  # Default status
+    order_items: List[OrderItemCreateSchema]  # List of items in the order
+
+    class Config:
+        orm_mode = True
+        
+        
+        
+
+
+
+class OrderItemUpdateSchema(BaseModel):
+    product_id: int
+    quantity: int  # Must be positive (validate in service logic)
+    total: float   # Must be positive (validate in service logic)
+
+class OrderUpdateSchema(BaseModel):
+    customer_name: Optional[str] = None
+    status: Optional[str] = None
+    order_items: Optional[List[OrderItemUpdateSchema]] = None  # Optional
+
+    class Config:
+        orm_mode = True
+        
+        
+class ProductReport(BaseModel):
+    product_name: str
+    total_sales: int
+    total_amount: float
+
+    class Config:
+        orm_mode = True  # This allows Pydantic to work directly with ORM models

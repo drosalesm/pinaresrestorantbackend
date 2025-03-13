@@ -3,6 +3,7 @@ import uuid
 from app.models.product import Product
 from app.models.orders import Order, OrderItem
 from sqlalchemy.orm import class_mapper
+from typing import List
 
 
 def format_response(http_code: int, message: str, data=None,request=None):
@@ -91,3 +92,20 @@ def serialize_order_summary(order):
         "created_at": order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else None,
         "updated_at": order.updated_at.strftime('%Y-%m-%d %H:%M:%S') if order.updated_at else None
     }
+
+
+
+def serialize_product_report(products_data: List):
+    """
+    Serializes the product sales report data into a suitable structure.
+    """
+
+    # Map the results to a list of dictionaries
+    return [
+        {
+            "product_name": product_name,
+            "total_sales": total_sales or 0,
+            "total_amount": float(total_amount or 0)
+        }
+        for product_name, total_sales, total_amount in products_data
+    ]

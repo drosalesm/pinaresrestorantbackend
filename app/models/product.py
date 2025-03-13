@@ -9,7 +9,6 @@ class Product(Base):
     name = Column(String, index=True)
     description = Column(String, nullable=True)
     price = Column(Float)
-    inventory = Column(Integer, default=0, nullable=True)
-    
+    inventory = Column(Integer, default=0, nullable=True)    
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     category = relationship("CategoryProducts")
