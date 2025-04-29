@@ -1,6 +1,6 @@
 # crud/order.py
 from sqlalchemy.orm import Session
-from app.models.orders import Order,OrderItem
+from app.models.orders import Order,OrderItem,billingConfig
 from app.models.product import Product
 from app.schemas.orders import OrderResponse,OrderCreateSchema,OrderUpdateSchema,ProductReport
 from datetime import datetime
@@ -17,8 +17,6 @@ def get_orders(db: Session, user_id: int):
 
 
 
-
-
 def get_order_by_id(db: Session, order_id: int):
     return db.query(Order).filter(Order.id == order_id).first()
 
@@ -27,16 +25,24 @@ def get_order_by_id(db: Session, order_id: int):
 
 def create_order(db: Session, order_data: OrderCreateSchema):
     # Ensure user exists
-    user = db.query(User).filter(User.id == order_data.user_id).first()
-    if not user:
-        return None, "Usuario no encontrado"
 
     try:
-        # Create a new order
+
+        isv = db.query(billingConfig).filter(billingConfig.id == 1).first()
+
+        if isv or isv>0:
+            isv = isv.isv/100
+        else:
+            isv = 0
+            isv_value=0  
+
+
         new_order = Order(
-            user_id=order_data.user_id,
+            username=order_data.username,
             customer_name=order_data.customer_name,
             total_price=0,  # Will be updated after adding items
+            final_price=0,  # Will be updated after adding items
+            isv=isv,  # Use ISV from billingConfig
             status=order_data.status,  # Use provided status
             created_at=datetime.utcnow(),
             updated_at=None,
@@ -55,11 +61,19 @@ def create_order(db: Session, order_data: OrderCreateSchema):
                 total=item.total,
             )
             db.add(order_item)
-            total_price += item.total
+            total_price += item.total            
 
+            if isv >0:                
+                fnl_amount=total_price + (total_price * isv)  
+                isv_value=total_price * isv
+            else:
+                fnl_amount=total_price
+                isv_value=0    
         # Update order's total price
         new_order.total_price = total_price
         new_order.updated_at = None
+        new_order.final_price=fnl_amount  # Update final price with ISV
+        new_order.isv=isv_value
 
         db.commit()
         db.refresh(new_order)
@@ -133,7 +147,7 @@ def update_order(db: Session, order_id: int, order_update: OrderUpdateSchema):
     
     
 
-def get_order_report(db: Session, created: str = None, updated: str = None,month: str = None):
+def get_order_report(db: Session, created_from: str = None, created_to: str = None, updated: str = None, month: str = None):
     try:
         today = datetime.utcnow().date()
 
@@ -143,26 +157,32 @@ def get_order_report(db: Session, created: str = None, updated: str = None,month
             func.sum(Order.total_price).label("total_amount")
         ).group_by(Order.status)
 
-        # Apply date filters separately
-
         if month:
-            print('Filtrando por mes')
             query = query.filter(
                 func.extract('year', Order.created_at) == int(month[:4]),
-                func.extract('month', Order.created_at) == int(month[5:]))                
-        if created:
-            query = query.filter(func.date(Order.created_at) == created)
-        
+                func.extract('month', Order.created_at) == int(month[5:])
+            )
+
+        if created_from and created_to:
+            query = query.filter(
+                func.date(Order.created_at) >= created_from,
+                func.date(Order.created_at) <= created_to
+            )
+        elif created_from:
+            query = query.filter(func.date(Order.created_at) >= created_from)
+        elif created_to:
+            query = query.filter(func.date(Order.created_at) <= created_to)
+
         if updated:
             query = query.filter(func.date(Order.updated_at) == updated)
 
-        if not created and not updated:
+        if not (created_from or created_to or updated or month):
             query = query.filter(func.date(Order.created_at) == today)
 
         results = query.all()
 
         if not results:
-            return None  # Return None so the router can handle 404 responses
+            return None
 
         return {status: {"total_orders": total_orders, "total_amount": float(total_amount or 0)}
                 for status, total_orders, total_amount in results}

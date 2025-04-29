@@ -4,7 +4,8 @@ from app.models.product import Product
 from app.models.orders import Order, OrderItem
 from sqlalchemy.orm import class_mapper
 from typing import List
-
+import win32print
+import win32ui
 
 def format_response(http_code: int, message: str, data=None,request=None):
     """Formats API responses dynamically based on HTTP status codes."""
@@ -63,9 +64,11 @@ def serialize_order(order):
 
     return {
         "id": order.id,
-        "user_id": order.user_id,
+        "username": order.username,
         "customer_name": order.customer_name,
         "total_price": order.total_price,
+        "isv": order.isv,
+        "final_price": order.final_price,
         "status": order.status,
         "created_at": order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else None,
         "updated_at": order.updated_at.strftime('%Y-%m-%d %H:%M:%S') if order.updated_at else None,
@@ -73,6 +76,7 @@ def serialize_order(order):
             {
                 "id": item.id,
                 "product_id": item.product_id,
+                "product_name": item.product.name if item.product else None,  # Add product name           
                 "quantity": item.quantity,
                 "total": item.total
             } for item in order.order_items
@@ -81,16 +85,27 @@ def serialize_order(order):
 
 
 
-
 def serialize_order_summary(order):
+
+    product_info = [
+        f"{item.product.name} ({item.quantity})" 
+        for item in order.order_items if item.product
+    ]
+    description = ", ".join(product_info)
+
+    
     return {
         "id": order.id,
-        "user_id": order.user_id,
+        "username": order.username,
         "customer_name": order.customer_name,
         "total_price": order.total_price,
+        "isv": order.isv,
+        "final_price": order.final_price,
         "status": order.status,
         "created_at": order.created_at.strftime('%Y-%m-%d %H:%M:%S') if order.created_at else None,
-        "updated_at": order.updated_at.strftime('%Y-%m-%d %H:%M:%S') if order.updated_at else None
+        "updated_at": order.updated_at.strftime('%Y-%m-%d %H:%M:%S') if order.updated_at else None,
+        "description": description
+        
     }
 
 
@@ -109,3 +124,46 @@ def serialize_product_report(products_data: List):
         }
         for product_name, total_sales, total_amount in products_data
     ]
+    
+
+
+def generate_order_receipt(order: dict) -> str:
+    receipt_lines = []
+
+    receipt_lines.append("        PINARES CENTRO DE RECREACION")
+    receipt_lines.append(f"    ORDEN #{order['id']} - {order['customer_name'].upper()}")
+    receipt_lines.append("-" * 42)
+    receipt_lines.append(f"Fecha: {order['created_at'][:16]}")
+    receipt_lines.append(f"Usuario: {order['username']}")
+    receipt_lines.append("-" * 42)
+
+    for item in order['order_items']:
+        name = item['product_name']
+        qty = item['quantity']
+        total = item['total']
+        line = f"{qty} x {name}".ljust(30, ".") + f"L{total:6.2f}"
+        receipt_lines.append(line)
+
+    receipt_lines.append("-" * 42)
+    receipt_lines.append(f"Subtotal".ljust(30, ".") + f"L{order['total_price']:6.2f}")
+    receipt_lines.append(f"ISV".ljust(30, ".") + f"L{order['isv']:6.2f}")
+    receipt_lines.append(f"Total a Pagar".ljust(30, ".") + f"L{order['final_price']:6.2f}")
+    receipt_lines.append(f"Estado: {order['status']}")
+    receipt_lines.append("-" * 42)
+    receipt_lines.append("Gracias por su preferencia 🙌")
+
+    return "\n".join(receipt_lines)
+
+
+
+def send_to_printer(text: str):
+    printer_name = win32print.GetDefaultPrinter()
+    hPrinter = win32print.OpenPrinter(printer_name)
+    try:
+        hJob = win32print.StartDocPrinter(hPrinter, 1, ("Recibo", None, "RAW"))
+        win32print.StartPagePrinter(hPrinter)
+        win32print.WritePrinter(hPrinter, text.encode("utf-8"))
+        win32print.EndPagePrinter(hPrinter)
+        win32print.EndDocPrinter(hPrinter)
+    finally:
+        win32print.ClosePrinter(hPrinter)

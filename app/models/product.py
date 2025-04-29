@@ -12,3 +12,5 @@ class Product(Base):
     inventory = Column(Integer, default=0, nullable=True)    
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     category = relationship("CategoryProducts")
+    imageUrl = Column(String, nullable=True)
+    unidad_de_negocio = Column(String, nullable=True)

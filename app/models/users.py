@@ -7,8 +7,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
+    name= Column(String, nullable=True)
+    email = Column(String, nullable=True, index=True)
     hashed_password = Column(String)
-    role = Column(String, default="user")  # Default role is "user"
-
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    role = Column(String, default="user") 
+    
+#    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")

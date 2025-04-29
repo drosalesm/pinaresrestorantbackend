@@ -3,18 +3,29 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.database import Base
 
+
+class billingConfig(Base):
+    __tablename__ = "billingConfig"
+
+    id = Column(Integer, primary_key=True, index=True)
+    isv =Column(Integer, nullable=True)  
+
+
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+#    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    username= Column(String, nullable=True)
     customer_name = Column(String, nullable=True)
     total_price = Column(Float, nullable=False)
+    isv =Column(Float, nullable=True)  
+    final_price = Column(Float, nullable=True)
     status = Column(String, default="pending")  # e.g., 'pending', 'shipped', 'delivered'
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    user = relationship("User", back_populates="orders")
+#    user = relationship("User", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
 
     def update_total_price(self):

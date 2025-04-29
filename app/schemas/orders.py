@@ -17,9 +17,11 @@ class OrderItemResponse(BaseModel):
 
 class OrderResponse(BaseModel):
     id: int
-    user_id: int
+    username: str
     customer_name: Optional[str]
     total_price: float
+    isv: Optional[float] = None
+    final_price: Optional[float] = None
     status: str
     created_at: str  # Convert to string format
     updated_at: str  # Convert to string format
@@ -32,9 +34,11 @@ class OrderResponse(BaseModel):
     def from_orm(cls, order):
         return cls(
             id=order.id,
-            user_id=order.user_id,
+            username=order.username,
             customer_name=order.customer_name,
             total_price=order.total_price,
+            isv=order.isv,
+            final_price=order.final_price,
             status=order.status,
             created_at=order.created_at.strftime('%Y-%m-%dT%H:%M:%S'),
             updated_at=order.updated_at.strftime('%Y-%m-%dT%H:%M:%S'),
@@ -55,7 +59,7 @@ class OrderItemCreateSchema(BaseModel):
         orm_mode = True
 
 class OrderCreateSchema(BaseModel):
-    user_id: int
+    username: str
     customer_name: Optional[str] = None  # Optional field
     status: str = "pending"  # Default status
     order_items: List[OrderItemCreateSchema]  # List of items in the order
