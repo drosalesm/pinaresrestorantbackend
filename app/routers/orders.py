@@ -229,7 +229,7 @@ def get_daily_order_report(
             Order.id.label('order_id'),
             func.sum(
                 case(
-                    (OrderItem.product_id != 15, OrderItem.total),
+                    (~OrderItem.product_id.in_([15, 16]), OrderItem.total),
                     else_=0
                 )
             ).label('adjusted_total')
@@ -306,7 +306,7 @@ def get_entradas_daily_report(
             func.date(Order.created_at) >= from_date,
             func.date(Order.created_at) <= to_date,
             Order.status == "enviada",
-            OrderItem.product_id == 15  # Only ENTRADAS products
+            OrderItem.product_id.in_([15, 16])             
         ).group_by(
             func.date(Order.created_at)
         ).order_by(

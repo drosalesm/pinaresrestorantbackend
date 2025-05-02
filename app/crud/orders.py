@@ -9,6 +9,7 @@ from sqlalchemy import func
 from typing import Optional
 from app.utils.utils import serialize_product_report
 from sqlalchemy.sql.expression import extract
+from app.utils.timezone_config import get_current_local_time
 
 
 def get_orders(db: Session, user_id: int):
@@ -44,7 +45,7 @@ def create_order(db: Session, order_data: OrderCreateSchema):
             final_price=0,  # Will be updated after adding items
             isv=isv,  # Use ISV from billingConfig
             status=order_data.status,  # Use provided status
-            created_at=datetime.utcnow(),
+            created_at=get_current_local_time(),
             updated_at=None,
         )
 
@@ -133,7 +134,7 @@ def update_order(db: Session, order_id: int, order_update: OrderUpdateSchema):
 
         # Update total price
         order.update_total_price()
-        order.updated_at = datetime.utcnow()
+        order.updated_at = get_current_local_time()
 
         db.commit()
         db.refresh(order)
@@ -149,7 +150,7 @@ def update_order(db: Session, order_id: int, order_update: OrderUpdateSchema):
 
 def get_order_report(db: Session, created_from: str = None, created_to: str = None, updated: str = None, month: str = None):
     try:
-        today = datetime.utcnow().date()
+        today = get_current_local_time().date()
 
         query = db.query(
             Order.status,
@@ -193,7 +194,8 @@ def get_order_report(db: Session, created_from: str = None, created_to: str = No
 
 def get_product_report(db: Session, created: str = None, updated: str = None,month: str = None):
     # Get today's date
-    today = datetime.utcnow().date()
+#    today = datetime.utcnow().date()
+    today = get_current_local_time().date()
 
     # Start query for product sales
     query = db.query(

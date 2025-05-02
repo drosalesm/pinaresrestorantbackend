@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.database import Base
+from app.utils.timezone_config import get_current_local_time
+
 
 
 class billingConfig(Base):
@@ -22,8 +24,8 @@ class Order(Base):
     isv =Column(Float, nullable=True)  
     final_price = Column(Float, nullable=True)
     status = Column(String, default="pending")  # e.g., 'pending', 'shipped', 'delivered'
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=get_current_local_time)
+    updated_at = Column(DateTime, default=get_current_local_time, onupdate=get_current_local_time)
 
 #    user = relationship("User", back_populates="orders")
     order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
